@@ -1,8 +1,10 @@
 import { Button, Form, Input, message } from "antd";
 import "./index.scss";
-import { login, registerCaptcha } from "../../api/interface";
+import { login, register, registerCaptcha } from "../../api/interface";
 import { useForm } from "antd/es/form/Form";
-import { Navigate } from "react-router-dom";
+import { Link, Navigate, useNavigate } from "react-router-dom";
+import { useCallback } from "react";
+import { AxiosError } from "axios";
 
 export interface RegisterUser {
   username: string;
@@ -12,25 +14,6 @@ export interface RegisterUser {
   email: string;
   captcha: string;
 }
-
-const onFinish = async (values: RegisterUser) => {
-  const res = await login(values.username, values.password);
-
-  const { code, message: msg, data } = res.data;
-  if (res.status === 201 || res.status === 200) {
-    message.success("登录成功");
-
-    localStorage.setItem("access_token", data.accessToken);
-    localStorage.setItem("refresh_token", data.refreshToken);
-    localStorage.setItem("user_info", JSON.stringify(data.userInfo));
-
-    setTimeout(() => {
-      Navigate({ to: "/" });
-    }, 1000);
-  } else {
-    message.error(data || "系统繁忙，请稍后再试");
-  }
-};
 
 const layout1 = {
   labelCol: { span: 6 },
@@ -44,13 +27,53 @@ const layout2 = {
 
 export function Register() {
   const [form] = useForm();
+  const navigate = useNavigate();
 
-  async function sendCaptcha() {
-    const address = form.getFieldValue("email");
+  const sendCaptcha = useCallback(async function () {
+    try {
+      const address = form.getFieldValue("email");
+      if (!address) {
+        return message.error("请输入邮箱地址");
+      }
 
-    const res = await registerCaptcha(address);
-    console.log(res);
-  }
+      const res = await registerCaptcha(address);
+      if (res.status === 201 || res.status === 200) {
+        message.success("验证码发送成功");
+      } else {
+        throw new Error(res.data.data || "系统繁忙，请稍后再试");
+      }
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        message.error(error.response?.data?.data || "系统繁忙，请稍后再试");
+      } else if (error instanceof Error) {
+        message.error(error.message || "系统繁忙，请稍后再试");
+      }
+    }
+  }, []);
+
+  const onFinish = useCallback(async (values: RegisterUser) => {
+    try {
+      if (values.password !== values.confirmPassword) {
+        throw new Error("两次密码输入不一致");
+      }
+      const res = await register(values);
+
+      if (res.status === 201 || res.status === 200) {
+        message.success("注册成功");
+        setTimeout(() => {
+          navigate("/login");
+        }, 1500);
+      } else {
+        throw new Error(res.data.data || "系统繁忙，请稍后再试");
+      }
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        message.error(error.response?.data?.data || "系统繁忙，请稍后再试");
+      } else if (error instanceof Error) {
+        message.error(error.message || "系统繁忙，请稍后再试");
+      }
+    }
+  }, []);
 
   return (
     <div id="register-container">
@@ -120,7 +143,7 @@ export function Register() {
 
         <Form.Item {...layout2}>
           <div className="links">
-            已有账号？去<a href="">登录</a>
+            已有账号？去<Link to="/login">登录</Link>
           </div>
         </Form.Item>
 

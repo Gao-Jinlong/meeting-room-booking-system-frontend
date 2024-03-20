@@ -2,35 +2,14 @@ import { DatePicker, Form, Input, Button, message } from "antd";
 import "./index.scss";
 import { login } from "../../api/interface";
 import { AxiosError, HttpStatusCode } from "axios";
+import { Link, useNavigate } from "react-router-dom";
+import { useCallback } from "react";
 
 interface LoginUser {
   username: string;
   password: string;
 }
 
-const onFinish = async (value: LoginUser) => {
-  try {
-    const res = await login(value.username, value.password);
-
-    if (
-      res.status === HttpStatusCode.Ok ||
-      res.status === HttpStatusCode.Created
-    ) {
-      console.log("登录成功", res.data.data);
-
-      storeUserToken(res.data.data);
-
-      message.success("登录成功");
-    }
-  } catch (error) {
-    if (error instanceof AxiosError) {
-      message.error(error.response?.data.data || "登录失败");
-    } else if (error instanceof Error) {
-      message.error(error.message || "登录失败");
-    }
-    console.error(error);
-  }
-};
 function storeUserToken(data: any) {
   localStorage.setItem("user", JSON.stringify(data));
 }
@@ -45,6 +24,36 @@ const layout2 = {
 };
 
 export function Login() {
+  const navigate = useNavigate();
+
+  const onFinish = useCallback(async (value: LoginUser) => {
+    try {
+      const res = await login(value.username, value.password);
+
+      if (
+        res.status === HttpStatusCode.Ok ||
+        res.status === HttpStatusCode.Created
+      ) {
+        console.log("登录成功", res.data.data);
+
+        storeUserToken(res.data.data);
+
+        message.success("登录成功");
+
+        setTimeout(() => {
+          navigate("/");
+        }, 1500);
+      }
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        message.error(error.response?.data.data || "登录失败");
+      } else if (error instanceof Error) {
+        message.error(error.message || "登录失败");
+      }
+      console.error(error);
+    }
+  }, []);
+
   return (
     <div id="login-container">
       <h1>会议室预订系统</h1>
@@ -67,8 +76,8 @@ export function Login() {
 
         <Form.Item {...layout2}>
           <div className="links">
-            <a href="">创建账号</a>
-            <a href="">忘记密码</a>
+            <Link to="/register">创建账号</Link>
+            <Link to="/update_password">忘记密码</Link>
           </div>
         </Form.Item>
 
