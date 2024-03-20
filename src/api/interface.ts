@@ -6,3 +6,9 @@ export function login(username: string, password: string) {
     password,
   });
 }
+
+export function registerCaptcha(address: string) {
+  return request.get("/user/register-captcha", {
+    params: { address },
+  });
+}
