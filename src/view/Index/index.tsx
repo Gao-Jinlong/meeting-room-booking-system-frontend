@@ -1,5 +1,6 @@
 import { Outlet } from "react-router-dom";
 import { UserOutlined } from "@ant-design/icons";
+import "./index.scss";
 
 export function Index() {
   return (
