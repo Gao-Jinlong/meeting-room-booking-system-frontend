@@ -75,6 +75,8 @@ async function refreshToken() {
   });
 
   localStorage.setItem("user", JSON.stringify({ ...user, ...res.data }));
+
+  return res;
 }
 
 axiosInstance.interceptors.request.use(function (config) {
