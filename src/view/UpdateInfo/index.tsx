@@ -3,10 +3,14 @@ import { useForm } from "antd/es/form/Form";
 import { useCallback, useEffect } from "react";
 import "./index.scss";
 import { useNavigate } from "react-router-dom";
-import { getUserInfo } from "../../api/interface";
+import {
+  getUserInfo,
+  updateInfo,
+  updateUserInfoCaptcha,
+} from "../../api/interface";
 
 export interface UserInfo {
-  headPic: string;
+  avatar: string;
   nickName: string;
   email: string;
   captcha: string;
@@ -21,10 +25,6 @@ export function UpdateInfo() {
   const [form] = useForm();
   const navigate = useNavigate();
 
-  const onFinish = useCallback(async (values: UserInfo) => {}, []);
-
-  const sendCaptcha = useCallback(async function () {}, []);
-
   useEffect(() => {
     async function query() {
       const res = await getUserInfo();
@@ -33,10 +33,33 @@ export function UpdateInfo() {
 
       if (res.status === 201 || res.status === 200) {
         console.log(data);
+
+        form.setFieldValue("avatar", data.avatar);
+        form.setFieldValue("nickName", data.nickName);
+        form.setFieldValue("email", data.email);
       }
     }
-
     query();
+  }, []);
+
+  const onFinish = useCallback(async (values: UserInfo) => {
+    const res = await updateInfo(values);
+    const { message: msg, data } = res.data;
+
+    if (res.status === 201 || res.status === 200) {
+      message.success(msg);
+    } else {
+      message.error(msg);
+    }
+  }, []);
+
+  const sendCaptcha = useCallback(async function () {
+    const res = await updateUserInfoCaptcha();
+    if (res.status === 201 || res.status === 200) {
+      message.success(res.data.data);
+    } else {
+      message.error("验证码发送失败");
+    }
   }, []);
 
   return (
@@ -50,7 +73,7 @@ export function UpdateInfo() {
       >
         <Form.Item
           label="头像"
-          name="headPic"
+          name="avatar"
           rules={[{ required: true, message: "请输入头像!" }]}
         >
           <Input />
@@ -72,7 +95,7 @@ export function UpdateInfo() {
             { type: "email", message: "请输入合法邮箱地址!" },
           ]}
         >
-          <Input />
+          <Input disabled />
         </Form.Item>
 
         <div className="captcha-wrapper">
@@ -90,7 +113,7 @@ export function UpdateInfo() {
 
         <Form.Item {...layout1} label=" ">
           <Button className="btn" type="primary" htmlType="submit">
-            修改密码
+            保存修改
           </Button>
         </Form.Item>
       </Form>
