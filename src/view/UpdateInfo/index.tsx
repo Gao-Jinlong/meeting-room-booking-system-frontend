@@ -8,6 +8,7 @@ import {
   updateInfo,
   updateUserInfoCaptcha,
 } from "../../api/interface";
+import AvatarUpload from "./AvatarUpload";
 
 export interface UserInfo {
   avatar: string;
@@ -76,7 +77,7 @@ export function UpdateInfo() {
           name="avatar"
           rules={[{ required: true, message: "请输入头像!" }]}
         >
-          <Input />
+          <AvatarUpload></AvatarUpload>
         </Form.Item>
 
         <Form.Item
